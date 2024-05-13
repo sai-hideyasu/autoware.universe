@@ -77,15 +77,17 @@ private:
   {
     if (candidate.lateral_shift > 0.0) {
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
-        uuid_map_.at("left"), isExecutionReady(), candidate.start_distance_to_path_change,
-        candidate.finish_distance_to_path_change, clock_->now());
+        uuid_map_.at("left"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
+        candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
+        clock_->now());
       candidate_uuid_ = uuid_map_.at("left");
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
-        uuid_map_.at("right"), isExecutionReady(), candidate.start_distance_to_path_change,
-        candidate.finish_distance_to_path_change, clock_->now());
+        uuid_map_.at("right"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
+        candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
+        clock_->now());
       candidate_uuid_ = uuid_map_.at("right");
       return;
     }
