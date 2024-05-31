@@ -117,11 +117,11 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   updateSteeringFactorPtr(output);
   if (module_type_->isAbortState()) {
     waitApproval();
-    removeRTCStatus();
     const auto candidate = planCandidate();
     path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     updateRTCStatus(
-      candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::ABORTING);
   } else {
     clearWaitingApproval();
     const auto path =
@@ -161,7 +161,9 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
-    removeRTCStatus();
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     path_candidate_ = std::make_shared<PathWithLaneId>();
     return out;
   }
@@ -170,7 +172,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
 
   updateRTCStatus(
-    candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
+    candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
+    isExecutionReady(), State::WAITING_FOR_EXECUTION);
   is_abort_path_approved_ = false;
 
   return out;
@@ -262,6 +265,9 @@ bool LaneChangeInterface::canTransitFailureState()
     if (module_type_->isStoppedAtRedTrafficLight()) {
       log_debug_throttled("Stopping at traffic light while in prepare phase. Cancel lane change");
       module_type_->toCancelState();
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
       return true;
     }
 
@@ -272,6 +278,9 @@ bool LaneChangeInterface::canTransitFailureState()
 
     if (module_type_->isAbleToReturnCurrentLane()) {
       log_debug_throttled("It's possible to return to current lane. Cancel lane change.");
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
       return true;
     }
   }
