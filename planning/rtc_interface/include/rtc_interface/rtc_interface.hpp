@@ -62,8 +62,10 @@ public:
   bool isForceDeactivated(const UUID & UUID) const;
   bool isRegistered(const UUID & uuid) const;
   bool isRTCEnabled(const UUID & uuid) const;
+  bool isTerminated(const UUID & uuid) const;
   void lockCommandUpdate();
   void unlockCommandUpdate();
+  void print() const;
 
 private:
   void onCooperateCommandService(
