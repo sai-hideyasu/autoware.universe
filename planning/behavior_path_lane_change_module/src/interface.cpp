@@ -124,6 +124,20 @@ BehaviorModuleOutput LaneChangeInterface::plan()
       candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
   } else {
     clearWaitingApproval();
+    const auto path =
+      assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
+    const auto force_activated = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+    if (!force_activated) {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
+        State::RUNNING);
+    } else {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, false,
+        State::RUNNING);
+    }
   }
 
   return output;
@@ -224,6 +238,15 @@ bool LaneChangeInterface::canTransitFailureState()
 
   updateDebugMarker();
   log_debug_throttled(__func__);
+
+  const auto force_activated = std::any_of(
+    rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+    [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+
+  if (force_activated) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe but force executed");
+    return false;
+  }
 
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
