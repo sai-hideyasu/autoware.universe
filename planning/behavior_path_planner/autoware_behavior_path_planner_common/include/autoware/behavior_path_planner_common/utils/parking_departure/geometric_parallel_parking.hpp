@@ -141,6 +141,12 @@ private:
     const Pose & start_pose, const lanelet::ConstLanelets & road_lanes);
   void setVelocityToArcPaths(
     std::vector<PathWithLaneId> & arc_paths, const double velocity, const bool set_stop_end);
+  PathWithLaneId generateClothoidalSequence(
+    const double A, const double L, const double theta);
+  PathWithLaneId generateClothoid(
+    const double A, const double L);
+
+  const bool use_clothoid_{true}
 
   // debug
   Pose Cr_{};
