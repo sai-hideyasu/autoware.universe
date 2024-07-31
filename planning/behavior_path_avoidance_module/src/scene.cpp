@@ -550,6 +550,24 @@ void AvoidanceModule::fillEgoStatus(
     return;
   }
 
+  const auto registered_sl_force_deactivated =
+    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+      return std::any_of(
+        shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
+          return rtc_interface_ptr_map_.at(direction)->isForceDeactivated(shift_line.uuid);
+        });
+    };
+
+  const auto is_force_deactivated = registered_sl_force_deactivated("left", left_shift_array_) ||
+                                    registered_sl_force_deactivated("right", right_shift_array_);
+  if (is_force_deactivated && can_yield_maneuver) {
+    data.yield_required = true;
+    data.safe_shift_line = data.new_shift_line;
+    data.force_deactivated = true;
+    RCLCPP_INFO(getLogger(), "this module is force deactivated. wait until reactivation");
+    return;
+  }
+
   /**
    * If the avoidance path is safe, use unapproved_new_sl for avoidance path generation.
    */
@@ -751,6 +769,10 @@ bool AvoidanceModule::isSafePath(
   ShiftedPath & shifted_path, [[maybe_unused]] DebugData & debug) const
 {
   const auto & p = planner_data_->parameters;
+
+  if (force_deactivated_) {
+    return false;
+  }
 
   if (!parameters_->enable_safety_check) {
     return true;  // if safety check is disabled, it always return safe.
@@ -1352,6 +1374,19 @@ void AvoidanceModule::updateData()
   }
 
   safe_ = avoid_data_.safe;
+
+  if (!force_deactivated_) {
+    last_deactivation_triggered_time_ = clock_->now();
+    force_deactivated_ = avoid_data_.force_deactivated;
+    return;
+  }
+
+  if (
+    (clock_->now() - last_deactivation_triggered_time_).seconds() >
+    parameters_->force_deactivate_duration_time) {
+    RCLCPP_INFO(getLogger(), "The force deactivation is released");
+    force_deactivated_ = false;
+  }
 }
 
 void AvoidanceModule::processOnEntry()
