@@ -2132,6 +2132,11 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       obj, lane_change_parameters_->use_all_predicted_path);
     auto is_safe = true;
+    const auto selected_rss_param =
+      (obj.initial_twist.twist.linear.x <=
+       lane_change_parameters_->prepare_segment_ignore_object_velocity_thresh)
+        ? lane_change_parameters_->rss_params_for_parked
+        : rss_params;
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
         path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
