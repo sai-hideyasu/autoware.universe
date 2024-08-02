@@ -1329,6 +1329,17 @@ bool is_before_terminal(
   }
   return current_max_dist >= 0.0;
 }
+
+double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+{
+  lanelet::ConstLanelet closest_lanelet;
+
+  if (!lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
+    return tier4_autoware_utils::deg2rad(180);
+  }
+  const auto closest_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, pose.position);
+  return std::abs(tier4_autoware_utils::calcYawDeviation(closest_pose, pose));
+}
 }  // namespace behavior_path_planner::utils::lane_change
 
 namespace behavior_path_planner::utils::lane_change::debug
