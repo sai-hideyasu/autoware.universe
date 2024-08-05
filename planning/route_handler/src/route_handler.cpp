@@ -896,6 +896,49 @@ bool RouteHandler::getNextLaneletWithinRoute(
   return false;
 }
 
+bool RouteHandler::getClosestRouteLaneletFromLanelet(
+  const Pose & search_pose, const lanelet::ConstLanelet & reference_lanelet,
+  lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
+  const double yaw_threshold) const
+{
+  lanelet::ConstLanelets previous_lanelets, next_lanelets, lanelet_sequence;
+  if (getPreviousLaneletsWithinRoute(reference_lanelet, &previous_lanelets)) {
+    lanelet_sequence = previous_lanelets;
+  }
+
+  lanelet_sequence.push_back(reference_lanelet);
+
+  if (getNextLaneletsWithinRoute(reference_lanelet, &next_lanelets)) {
+    lanelet_sequence.insert(lanelet_sequence.end(), next_lanelets.begin(), next_lanelets.end());
+  }
+
+  if (lanelet::utils::query::getClosestLaneletWithConstrains(
+        lanelet_sequence, search_pose, closest_lanelet, dist_threshold, yaw_threshold)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool RouteHandler::getNextLaneletsWithinRoute(
+  const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * next_lanelets) const
+{
+  if (exists(goal_lanelets_, lanelet)) {
+    return false;
+  }
+
+  const auto start_lane_id = route_ptr_->segments.front().preferred_primitive.id;
+
+  const auto following_lanelets = routing_graph_ptr_->following(lanelet);
+  next_lanelets->clear();
+  for (const auto & llt : following_lanelets) {
+    if (start_lane_id != llt.id() && exists(route_lanelets_, llt)) {
+      next_lanelets->push_back(llt);
+    }
+  }
+  return !(next_lanelets->empty());
+}
+
 lanelet::ConstLanelets RouteHandler::getNextLanelets(const lanelet::ConstLanelet & lanelet) const
 {
   return routing_graph_ptr_->following(lanelet);

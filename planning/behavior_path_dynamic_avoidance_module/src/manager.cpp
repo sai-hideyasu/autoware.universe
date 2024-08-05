@@ -287,10 +287,6 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   });
 }
 
-bool DynamicAvoidanceModuleManager::isAlwaysExecutableModule() const
-{
-  return true;
-}
 }  // namespace behavior_path_planner
 
 #include <pluginlib/class_list_macros.hpp>

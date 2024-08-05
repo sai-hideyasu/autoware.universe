@@ -99,6 +99,16 @@ public:
     observers_.erase(itr, observers_.end());
   }
 
+  void publishRTCStatus()
+  {
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->removeExpiredCooperateStatus();
+        ptr->publishCooperateStatus(rclcpp::Clock(RCL_ROS_TIME).now());
+      }
+    }
+  }
+
   void publishVirtualWall() const
   {
     using tier4_autoware_utils::appendMarkerArray;
@@ -197,36 +207,15 @@ public:
 
   bool canLaunchNewModule() const { return observers_.size() < config_.max_module_size; }
 
-  /**
-   * Determine if the module is always executable, regardless of the state of other modules.
-   *
-   * When this returns true:
-   * - The module can be executed even if other modules are not marked as 'simultaneously
-   * executable'.
-   * - Conversely, the presence of this module will not prevent other modules
-   *   from executing, even if they are not marked as 'simultaneously executable'.
-   */
-  virtual bool isAlwaysExecutableModule() const { return false; }
-
   virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
-    if (isAlwaysExecutableModule()) {
-      return true;
-    }
-
     return config_.enable_simultaneous_execution_as_approved_module;
   }
 
   virtual bool isSimultaneousExecutableAsCandidateModule() const
   {
-    if (isAlwaysExecutableModule()) {
-      return true;
-    }
-
     return config_.enable_simultaneous_execution_as_candidate_module;
   }
-
-  bool isKeepLast() const { return config_.keep_last; }
 
   void setData(const std::shared_ptr<PlannerData> & planner_data) { planner_data_ = planner_data; }
 
@@ -249,8 +238,6 @@ public:
 
     pub_debug_marker_->publish(MarkerArray{});
   }
-
-  size_t getPriority() const { return config_.priority; }
 
   std::string name() const { return name_; }
 
@@ -280,8 +267,6 @@ protected:
         getOrDeclareParameter<bool>(*node, ns + "enable_simultaneous_execution_as_approved_module");
       config_.enable_simultaneous_execution_as_candidate_module = getOrDeclareParameter<bool>(
         *node, ns + "enable_simultaneous_execution_as_candidate_module");
-      config_.keep_last = getOrDeclareParameter<bool>(*node, ns + "keep_last");
-      config_.priority = getOrDeclareParameter<int>(*node, ns + "priority");
       config_.max_module_size = getOrDeclareParameter<int>(*node, ns + "max_module_size");
     }
 
