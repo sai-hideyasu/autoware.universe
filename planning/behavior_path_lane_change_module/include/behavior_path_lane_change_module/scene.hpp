@@ -30,10 +30,10 @@ using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
-using data::lane_change::LanesPolygon;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using lane_change::LanesPolygon;
 using route_handler::Direction;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 
@@ -49,6 +49,8 @@ public:
   NormalLaneChange & operator=(const NormalLaneChange &) = delete;
   NormalLaneChange & operator=(NormalLaneChange &&) = delete;
   ~NormalLaneChange() override = default;
+
+  void update_lanes(const bool is_approved) final;
 
   void updateLaneChangeStatus() override;
 
@@ -104,8 +106,6 @@ public:
   TurnSignalInfo get_current_turn_signal_info() override;
 
 protected:
-  lanelet::ConstLanelets getCurrentLanes() const override;
-
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, Direction direction) const override;
 
@@ -123,18 +123,12 @@ protected:
     const LaneChangeLanesFilteredObjects & predicted_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  LaneChangeLanesFilteredObjects filterObjects(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  LaneChangeLanesFilteredObjects filterObjects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
-  void filterAheadTerminalObjects(
-    PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes) const;
-
   void filterObjectsByLanelets(
-    const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes,
+    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path,
     std::vector<PredictedObject> & current_lane_objects,
     std::vector<PredictedObject> & target_lane_objects,
     std::vector<PredictedObject> & other_lane_objects) const;
@@ -201,6 +195,11 @@ protected:
   void updateStopTime();
 
   double getStopTime() const { return stop_time_; }
+
+  const lanelet::ConstLanelets & get_target_lanes() const
+  {
+    return common_data_ptr_->lanes_ptr->target;
+  }
 
   double stop_time_{0.0};
 };

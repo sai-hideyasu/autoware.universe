@@ -41,13 +41,13 @@ namespace behavior_path_planner::utils::lane_change
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::lane_change::CommonDataPtr;
+using behavior_path_planner::lane_change::LanesPolygon;
+using behavior_path_planner::lane_change::PathSafetyStatus;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
-using data::lane_change::LanesPolygon;
-using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -113,8 +113,9 @@ bool isPathInLanelets(
   const lanelet::ConstLanelets & target_lanes);
 
 std::optional<LaneChangePath> constructCandidatePath(
-  const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
-  const PathWithLaneId & target_segment, const PathWithLaneId & target_lane_reference_path,
+  const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
+  const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
 ShiftLine getLaneChangingShiftLine(
@@ -175,10 +176,9 @@ bool isParkedObject(
   const ExtendedPredictedObject & object, const double buffer_to_bound,
   const double ratio_threshold);
 
-bool passParkedObject(
-  const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
+bool passed_parked_objects(
+  const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters,
   CollisionCheckDebugMap & object_debug);
 
 std::optional<size_t> getLeadingStaticObjectIdx(
@@ -194,7 +194,8 @@ ExtendedPredictedObject transform(
   const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase);
 
 bool isCollidedPolygonsInLanelet(
-  const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes);
+  const std::vector<Polygon2d> & collided_polygons,
+  const std::optional<lanelet::BasicPolygon2d> & lanes_polygon);
 
 /**
  * @brief Generates expanded lanelets based on the given direction and offsets.
@@ -294,9 +295,22 @@ double calcPhaseLength(
   const double velocity, const double maximum_velocity, const double acceleration,
   const double time);
 
-LanesPolygon createLanesPolygon(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  const std::vector<lanelet::ConstLanelets> & target_backward_lanes);
+LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
+
+bool is_same_lane_with_prev_iteration(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes);
+
+Pose to_pose(
+  const tier4_autoware_utils::Point2d & point, const geometry_msgs::msg::Quaternion & orientation);
+
+bool is_ahead_of_ego(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object);
+
+bool is_before_terminal(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object);
 }  // namespace behavior_path_planner::utils::lane_change
 
 namespace behavior_path_planner::utils::lane_change::debug
