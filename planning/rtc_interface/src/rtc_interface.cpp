@@ -467,4 +467,4 @@ void RTCInterface::print() const
   }
 }
 
-}  // namespace autoware::rtc_interface
+}  // namespace rtc_interface

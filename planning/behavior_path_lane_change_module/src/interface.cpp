@@ -262,6 +262,21 @@ bool LaneChangeInterface::canTransitFailureState()
     return false;
   }
 
+  if (!module_type_->isValidPath()) {
+    log_debug_throttled("Transit to failure state due not to find valid path");
+    return true;
+  }
+
+  if (module_type_->isAbortState() && module_type_->hasFinishedAbort()) {
+    log_debug_throttled("Abort process has completed.");
+    return true;
+  }
+
+  if (module_type_->is_near_terminal()) {
+    log_debug_throttled("Unsafe, but ego is approaching terminal. Continue lane change");
+    return false;
+  }
+
   if (module_type_->isCancelEnabled() && module_type_->isEgoOnPreparePhase()) {
     if (module_type_->isStoppedAtRedTrafficLight()) {
       log_debug_throttled("Stopping at traffic light while in prepare phase. Cancel lane change");
@@ -287,6 +302,11 @@ bool LaneChangeInterface::canTransitFailureState()
 
     if (post_process_safety_status_.is_safe) {
       log_debug_throttled("Can't transit to failure state. Ego is on prepare, and it's safe.");
+
+      if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
+        log_debug_throttled("Module require stopping");
+      }
+
       return false;
     }
 
@@ -304,7 +324,7 @@ bool LaneChangeInterface::canTransitFailureState()
     return false;
   }
 
-  if (module_type_->isRequiredStop(post_process_safety_status_.is_object_coming_from_rear)) {
+  if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
     log_debug_throttled("Module require stopping");
   }
 
