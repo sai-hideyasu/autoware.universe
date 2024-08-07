@@ -2175,7 +2175,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
         : rss_params;
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
-        path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
+        path, ego_predicted_path, obj, obj_path, common_parameters, selected_rss_param, 1.0,
         get_max_velocity_for_safety_check(), current_debug_data.second);
 
       if (collided_polygons.empty()) {
