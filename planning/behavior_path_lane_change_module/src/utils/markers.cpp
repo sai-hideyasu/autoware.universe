@@ -110,6 +110,9 @@ MarkerArray showFilteredObjects(
   auto target_leading_marker = marker_utils::showFilteredObjects(
     filtered_objects.target_lane_leading, ns, colors::aqua(), update_id);
   update_id += static_cast<int32_t>(target_leading_marker.markers.size());
+  auto extended_target_marker = marker_utils::showFilteredObjects(
+    filtered_objects.extended_target_lane, ns, colors::aqua(), update_id);
+  update_id += static_cast<int32_t>(extended_target_marker.markers.size());
   auto target_trailing_marker = marker_utils::showFilteredObjects(
     filtered_objects.target_lane_trailing, ns, colors::blue(), update_id);
   update_id += static_cast<int32_t>(target_trailing_marker.markers.size());
@@ -128,6 +131,9 @@ MarkerArray showFilteredObjects(
     target_trailing_marker.markers.begin(), target_trailing_marker.markers.end(),
     std::back_inserter(marker_array.markers));
 
+  std::move(
+    extended_target_marker.markers.begin(), extended_target_marker.markers.end(),
+    std::back_inserter(marker_array.markers));
   std::move(
     other_marker.markers.begin(), other_marker.markers.end(),
     std::back_inserter(marker_array.markers));

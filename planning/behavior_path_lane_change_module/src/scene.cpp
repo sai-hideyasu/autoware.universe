@@ -986,6 +986,9 @@ lane_change::TargetObjects NormalLaneChange::getTargetObjects(
   const lanelet::ConstLanelets & current_lanes) const
 {
   ExtendedPredictedObjects leading_objects = filtered_objects.target_lane_leading;
+  leading_objects.insert(
+    leading_objects.end(), filtered_objects.extended_target_lane.begin(),
+    filtered_objects.extended_target_lane.end());
   const auto is_stuck = isVehicleStuck(current_lanes);
   const auto chk_obj_in_curr_lanes = lane_change_parameters_->check_objects_on_current_lanes;
   if (chk_obj_in_curr_lanes || is_stuck) {
@@ -1083,6 +1086,15 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
       extended_target_lane_trailing_objects.push_back(extended_predicted_object);
     });
 
+  ExtendedPredictedObjects extended_target_lane_objects;
+  std::for_each(
+    filtered_by_lanes_objects.extended_target_lane.begin(),
+    filtered_by_lanes_objects.extended_target_lane.end(), [&](const auto & object) {
+      auto extended_predicted_object = utils::lane_change::transform(
+        object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
+      extended_target_lane_objects.push_back(extended_predicted_object);
+    });
+
   ExtendedPredictedObjects extended_current_lane_objects;
   std::for_each(
     filtered_by_lanes_objects.current_lane.begin(), filtered_by_lanes_objects.current_lane.end(),
@@ -1103,7 +1115,8 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
 
   FilteredByLanesExtendedObjects lane_change_target_objects(
     extended_current_lane_objects, extended_target_lane_leading_objects,
-    extended_target_lane_trailing_objects, extended_other_lane_objects);
+    extended_target_lane_trailing_objects, extended_target_lane_objects,
+    extended_other_lane_objects);
   lane_change_debug_.filtered_objects = lane_change_target_objects;
   return lane_change_target_objects;
 }
@@ -1140,6 +1153,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
 {
   std::vector<PredictedObject> target_lane_leading_objects;
   std::vector<PredictedObject> target_lane_trailing_objects;
+  std::vector<PredictedObject> extended_target_lane_objects;
   std::vector<PredictedObject> current_lane_objects;
   std::vector<PredictedObject> other_lane_objects;
 
@@ -1178,6 +1192,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
   current_lane_objects.reserve(reserve_size);
   target_lane_leading_objects.reserve(reserve_size);
   target_lane_trailing_objects.reserve(reserve_size);
+  extended_target_lane_objects.reserve(reserve_size);
   other_lane_objects.reserve(reserve_size);
 
   for (const auto & object : objects.objects) {
@@ -1212,9 +1227,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
         utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
       if (object.kinematics.initial_twist_with_covariance.twist.linear.x < 1.0) {
         if (ahead_of_ego) {
-          target_lane_leading_objects.push_back(object);
-        } else {
-          target_lane_trailing_objects.push_back(object);
+          extended_target_lane_objects.push_back(object);
         }
         continue;
       }
@@ -1246,7 +1259,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
 
   return {
     current_lane_objects, target_lane_leading_objects, target_lane_trailing_objects,
-    other_lane_objects};
+    extended_target_lane_objects, other_lane_objects};
 }
 
 PathWithLaneId NormalLaneChange::getTargetSegment(

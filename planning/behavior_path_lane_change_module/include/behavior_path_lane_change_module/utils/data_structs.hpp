@@ -222,14 +222,17 @@ struct LanesObjects
   Object current_lane{};
   Object target_lane_leading{};
   Object target_lane_trailing{};
+  Object extended_target_lane{};
   Object other_lane{};
 
   LanesObjects() = default;
   LanesObjects(
-    Object current_lane, Object target_lane_leading, Object target_lane_trailing, Object other_lane)
+    Object current_lane, Object target_lane_leading, Object target_lane_trailing,
+    Object extended_target_lane, Object other_lane)
   : current_lane(std::move(current_lane)),
     target_lane_leading(std::move(target_lane_leading)),
     target_lane_trailing(std::move(target_lane_trailing)),
+    extended_target_lane(std::move(extended_target_lane)),
     other_lane(std::move(other_lane))
   {
   }
