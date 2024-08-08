@@ -1210,7 +1210,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
     };
 
     if (
-      check_optional_polygon(object, lanes_polygon.target) && is_lateral_far &&
+      check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
       is_before_terminal()) {
       const auto ahead_of_ego =
         utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
