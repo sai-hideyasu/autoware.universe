@@ -220,22 +220,22 @@ mergeLaneletsByTopologicalSort(
   const lanelet::ConstLanelets & lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
 {
-  const int n_node = lanelets.size();
-  std::vector<std::vector<int>> adjacency(n_node);
-  for (int dst = 0; dst < n_node; ++dst) {
+  const auto n_node = lanelets.size();
+  std::vector<std::vector<bool>> adjacency(n_node);
+  for (size_t dst = 0; dst < n_node; ++dst) {
     adjacency[dst].resize(n_node);
-    for (int src = 0; src < n_node; ++src) {
+    for (size_t src = 0; src < n_node; ++src) {
       adjacency[dst][src] = false;
     }
   }
   std::set<lanelet::Id> lanelet_ids;
-  std::unordered_map<lanelet::Id, int> id2ind;
-  std::unordered_map<int, lanelet::Id> ind2id;
+  std::unordered_map<lanelet::Id, size_t> id2ind;
+  std::unordered_map<size_t, lanelet::Id> ind2id;
   std::unordered_map<lanelet::Id, lanelet::ConstLanelet> id2lanelet;
-  int ind = 0;
+  size_t ind = 0;
   for (const auto & lanelet : lanelets) {
-    lanelet_ids.insert(lanelet.id());
     const auto id = lanelet.id();
+    lanelet_ids.insert(id);
     id2ind[id] = ind;
     ind2id[ind] = id;
     id2lanelet[id] = lanelet;
@@ -245,24 +245,24 @@ mergeLaneletsByTopologicalSort(
   // side, so if lane B follows lane A on the routing_graph, adj[B][A] = true
   for (const auto & lanelet : lanelets) {
     const auto & followings = routing_graph_ptr->following(lanelet);
-    const int dst = lanelet.id();
+    const auto dst = lanelet.id();
     for (const auto & following : followings) {
-      if (const int src = following.id(); lanelet_ids.find(src) != lanelet_ids.end()) {
+      if (const auto src = following.id(); lanelet_ids.find(src) != lanelet_ids.end()) {
         adjacency[(id2ind[src])][(id2ind[dst])] = true;
       }
     }
   }
   // terminal node
   std::map<lanelet::Id, std::vector<lanelet::Id>> branches;
-  auto has_no_previous = [&](const int node) {
-    for (int dst = 0; dst < n_node; dst++) {
+  auto has_no_previous = [&](const size_t node) {
+    for (size_t dst = 0; dst < n_node; dst++) {
       if (adjacency[dst][node]) {
         return false;
       }
     }
     return true;
   };
-  for (int src = 0; src < n_node; src++) {
+  for (size_t src = 0; src < n_node; src++) {
     if (!has_no_previous(src)) {
       continue;
     }
@@ -273,7 +273,7 @@ mergeLaneletsByTopologicalSort(
     std::set<lanelet::Id> visited_ids;
     while (true) {
       const auto & destinations = adjacency[(id2ind[node_iter])];
-      // NOTE: assuming detection lanelets have only one "previous"(on the routing_graph) lanelet
+      // ここ: assuming detection lanelets have only one "previous"(on the routing_graph) lanelet
       const auto next = std::find(destinations.begin(), destinations.end(), true);
       if (next == destinations.end()) {
         branch.push_back(node_iter);
