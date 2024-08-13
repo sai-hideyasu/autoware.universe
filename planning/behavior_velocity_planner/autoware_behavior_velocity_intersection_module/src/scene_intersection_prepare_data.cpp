@@ -577,6 +577,73 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   return intersection_stoplines;
 }
 
+static std::vector<std::deque<lanelet::ConstLanelet>> getPrecedingLaneletsUptoIntersectionRecursive(
+  const lanelet::routing::RoutingGraphPtr & graph, const lanelet::ConstLanelet & lanelet,
+  const double length, const lanelet::ConstLanelets & exclude_lanelets)
+{
+  std::vector<std::deque<lanelet::ConstLanelet>> preceding_lanelet_sequences;
+
+  const auto prev_lanelets = graph->previous(lanelet);
+  const double lanelet_length = lanelet::utils::getLaneletLength3d(lanelet);
+
+  // end condition of the recursive function
+  if (prev_lanelets.empty() || lanelet_length >= length) {
+    preceding_lanelet_sequences.push_back({lanelet});
+    return preceding_lanelet_sequences;
+  }
+
+  for (const auto & prev_lanelet : prev_lanelets) {
+    if (lanelet::utils::contains(exclude_lanelets, prev_lanelet)) {
+      // if prev_lanelet is included in exclude_lanelets,
+      // remove prev_lanelet from preceding_lanelet_sequences
+      continue;
+    }
+    if (const std::string turn_direction = prev_lanelet.attributeOr("turn_direction", "else");
+        turn_direction == "left" || turn_direction == "right") {
+      continue;
+    }
+
+    // get lanelet sequence after prev_lanelet
+    auto tmp_lanelet_sequences = getPrecedingLaneletsUptoIntersectionRecursive(
+      graph, prev_lanelet, length - lanelet_length, exclude_lanelets);
+    for (auto & tmp_lanelet_sequence : tmp_lanelet_sequences) {
+      tmp_lanelet_sequence.push_back(lanelet);
+      preceding_lanelet_sequences.push_back(tmp_lanelet_sequence);
+    }
+  }
+
+  if (preceding_lanelet_sequences.empty()) {
+    preceding_lanelet_sequences.push_back({lanelet});
+  }
+  return preceding_lanelet_sequences;
+}
+
+static std::vector<lanelet::ConstLanelets> getPrecedingLaneletsUptoIntersection(
+  const lanelet::routing::RoutingGraphPtr & graph, const lanelet::ConstLanelet & lanelet,
+  const double length, const lanelet::ConstLanelets & exclude_lanelets)
+{
+  std::vector<lanelet::ConstLanelets> lanelet_sequences_vec;
+  const auto prev_lanelets = graph->previous(lanelet);
+  for (const auto & prev_lanelet : prev_lanelets) {
+    if (lanelet::utils::contains(exclude_lanelets, prev_lanelet)) {
+      // if prev_lanelet is included in exclude_lanelets,
+      // remove prev_lanelet from preceding_lanelet_sequences
+      continue;
+    }
+    if (const std::string turn_direction = prev_lanelet.attributeOr("turn_direction", "else");
+        turn_direction == "left" || turn_direction == "right") {
+      continue;
+    }
+    // convert deque into vector
+    const auto lanelet_sequences_deq =
+      getPrecedingLaneletsUptoIntersectionRecursive(graph, prev_lanelet, length, exclude_lanelets);
+    for (const auto & lanelet_sequence : lanelet_sequences_deq) {
+      lanelet_sequences_vec.emplace_back(lanelet_sequence.begin(), lanelet_sequence.end());
+    }
+  }
+  return lanelet_sequences_vec;
+}
+
 IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet) const
@@ -706,8 +773,8 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
       if (inserted.second) occlusion_detection_and_preceding_lanelets.push_back(ll);
       // get preceding lanelets without ego_lanelets
       // to prevent the detection area from including the ego lanes and its' preceding lanes.
-      const auto lanelet_sequences = lanelet::utils::query::getPrecedingLaneletSequences(
-        routing_graph_ptr, ll, length, ego_lanelets);
+      const auto lanelet_sequences =
+        getPrecedingLaneletsUptoIntersection(routing_graph_ptr, ll, length, ego_lanelets);
       for (const auto & ls : lanelet_sequences) {
         for (const auto & l : ls) {
           const auto & inner_inserted = detection_ids.insert(l.id());
@@ -715,14 +782,6 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
         }
       }
     }
-  }
-  lanelet::ConstLanelets occlusion_detection_and_preceding_lanelets_wo_turn_direction;
-  for (const auto & ll : occlusion_detection_and_preceding_lanelets) {
-    const std::string turn_direction = ll.attributeOr("turn_direction", "else");
-    if (turn_direction == "left" || turn_direction == "right") {
-      continue;
-    }
-    occlusion_detection_and_preceding_lanelets_wo_turn_direction.push_back(ll);
   }
 
   auto [attention_lanelets, original_attention_lanelet_sequences] =
@@ -764,8 +823,7 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   // NOTE: occlusion_attention is not inverted here
   // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occlusion lanelets as well and
   // then trim part of them based on curvature threshold
-  result.occlusion_attention_ =
-    std::move(occlusion_detection_and_preceding_lanelets_wo_turn_direction);
+  result.occlusion_attention_ = std::move(occlusion_detection_and_preceding_lanelets);
 
   // NOTE: to properly update(), each element in conflicting_/conflicting_area_,
   // attention_non_preceding_/attention_non_preceding_area_ need to be matched
