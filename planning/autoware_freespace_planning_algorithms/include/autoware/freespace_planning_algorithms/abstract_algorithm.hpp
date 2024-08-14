@@ -29,6 +29,8 @@
 
 namespace autoware::freespace_planning_algorithms
 {
+using autoware::universe_utils::normalizeRadian;
+
 geometry_msgs::msg::Pose transformPose(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform);
 int discretizeAngle(const double theta, const int theta_size);
@@ -232,9 +234,19 @@ protected:
   }
 
   template <typename IndexType>
-  inline double getObstacleEDT(const IndexType & index) const
+  inline std::pair<double, double> getObstacleEDT(const IndexType & index) const
   {
     return edt_map_[indexToId(index)];
+  }
+
+  inline double getVehicleToObstacleDistance(const IndexXYT & index) const
+  {
+    const auto edt = getObstacleEDT(index);
+    if(edt.first < collision_vehicle_shape_.min_dimension) return 0.0;
+    if(!std::isfinite(edt.first)) return edt.first;
+    const double yaw = index.theta * (2.0 * M_PI / planner_common_param_.theta_size);
+    const double base_to_frame_dist = getVehicleBaseToFrameDistance(yaw - edt.second);
+    return std::max(edt.first - base_to_frame_dist, 0.0);
   }
 
   // compute single dimensional grid cell index from 2 dimensional index
@@ -242,6 +254,19 @@ protected:
   inline int indexToId(const IndexType & index) const
   {
     return index.y * costmap_.info.width + index.x;
+  }
+
+  inline double getVehicleBaseToFrameDistance(const double angle) const
+  {
+    const double normalized_angle = std::abs(normalizeRadian(angle));
+    const double w = 0.5 * collision_vehicle_shape_.width;
+    const double l_b = collision_vehicle_shape_.base2back;
+    const double l_f = collision_vehicle_shape_.length - l_b;
+
+    if (normalized_angle < atan(w/l_f)) return l_f / cos(normalized_angle);
+    if (normalized_angle < M_PI_2) return w / sin(normalized_angle);
+    if (normalized_angle < M_PI_2 + atan(l_b/w)) return w / cos(normalized_angle - M_PI_2);
+    return l_b / cos(M_PI - normalized_angle);
   }
 
   PlannerCommonParam planner_common_param_;
@@ -259,8 +284,8 @@ protected:
   // is_obstacle's table
   std::vector<bool> is_obstacle_table_;
 
-  // Euclidean distance transform map (distance to nearest obstacle cell)
-  std::vector<double> edt_map_;
+  // Euclidean distance transform map (distance & angle pair to nearest obstacle cell)
+  std::vector<std::pair<double, double>> edt_map_;
 
   // pose in costmap frame
   geometry_msgs::msg::Pose start_pose_;

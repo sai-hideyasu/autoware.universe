@@ -20,6 +20,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <std_msgs/msg/header.hpp>
 
@@ -177,13 +178,13 @@ private:
   // expansion distance factors
   static constexpr double base_length_max_expansion_factor_ = 0.5;
   static constexpr double dist_to_goal_expansion_factor_ = 0.15;
-  static constexpr double dist_to_obs_expansion_factor_ = 0.3;
+  static constexpr double dist_to_obs_expansion_factor_ = 0.5;
 
   // initial cost offset for multi goal backward search
   static constexpr double multi_goal_backward_cost_offset = 5.0;
 
   // cost free obstacle distance
-  static constexpr double cost_free_obs_dist = 5.0;
+  static constexpr double cost_free_obs_dist = 1.0;
 };
 }  // namespace autoware::freespace_planning_algorithms
 
