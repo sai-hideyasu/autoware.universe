@@ -247,16 +247,6 @@ protected:
     return edt_map_[indexToId(index)];
   }
 
-  inline double getVehicleToObstacleDistance(const IndexXYT & index) const
-  {
-    const auto edt = getObstacleEDT(index);
-    if(edt.first < collision_vehicle_shape_.min_dimension) return 0.0;
-    if(!std::isfinite(edt.first)) return edt.first;
-    const double yaw = index.theta * (2.0 * M_PI / planner_common_param_.theta_size);
-    const double base_to_frame_dist = getVehicleBaseToFrameDistance(yaw - edt.second);
-    return std::max(edt.first - base_to_frame_dist, 0.0);
-  }
-
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
   inline int indexToId(const IndexType & index) const
