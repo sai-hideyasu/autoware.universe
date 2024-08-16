@@ -313,22 +313,9 @@ bool FreespacePlannerNode::isPlanRequired()
     return true;
   }
 
-  if (node_param_.replan_when_obstacle_found) {
-    algo_->setMap(*occupancy_grid_);
-
-    const size_t nearest_index_partial = autoware::motion_utils::findNearestIndex(
-      partial_trajectory_.points, current_pose_.pose.position);
-    const size_t end_index_partial = partial_trajectory_.points.size() - 1;
-
-    const auto forward_trajectory =
-      getPartialTrajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
-
-    const bool is_obstacle_found =
-      algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
-    if (is_obstacle_found) {
-      RCLCPP_DEBUG(get_logger(), "Found obstacle");
-      return true;
-    }
+  if (node_param_.replan_when_obstacle_found && checkCurrentTrajectoryCollision()) {
+    RCLCPP_DEBUG(get_logger(), "Found obstacle");
+    return true;
   }
 
   if (node_param_.replan_when_course_out) {
@@ -341,6 +328,28 @@ bool FreespacePlannerNode::isPlanRequired()
   }
 
   return false;
+}
+
+bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
+{
+  algo_->setMap(*occupancy_grid_);
+
+  const size_t nearest_index_partial = autoware::motion_utils::findNearestIndex(
+      partial_trajectory_.points, current_pose_.pose.position);
+  const size_t end_index_partial = partial_trajectory_.points.size() - 1;
+  const auto forward_trajectory =
+      getPartialTrajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
+
+  if (!algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory))) {
+    collision_confidence = 0.0;
+    return false;
+  }
+
+  RCLCPP_WARN(get_logger(), "Trajectory maybe colliding with obstacle (confidence = %f)", collision_confidence);
+
+  collision_confidence += confidence_increase_rate * (1.0 - collision_confidence);
+
+  return collision_confidence > confidence_threshold;
 }
 
 void FreespacePlannerNode::updateTargetIndex()
@@ -573,6 +582,7 @@ void FreespacePlannerNode::reset()
   std_msgs::msg::Bool is_completed_msg;
   is_completed_msg.data = is_completed_;
   parking_state_pub_->publish(is_completed_msg);
+  collision_confidence = 0.0;
 }
 
 TransformStamped FreespacePlannerNode::getTransform(
