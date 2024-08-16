@@ -30,11 +30,11 @@ TEST(TestUtil, retrievePathsBackward)
     {false, true /*1*/, false, false, false, false, false, false},
     {false, false, true /*2*/, true /*3*/, false, false, false, false},
     {false, false, false, false, true /*4*/, false, false, false},
-    {false, false, false, false, false, false /*5*/, false, false},
-    {false, false, false, false, false, false, false /*6*/, false /*7*/},
+    {false, false, false, false, false, true /*5*/, false, false},
+    {false, false, false, false, false, false, true /*6*/, true /*7*/},
     {false, false, false, false, false, false, false, false},
     {false, false, false, false, false, false, false, false},
-    {false, false, false, false, false /*4*/, false, false, false},
+    {false, false, false, false, true /*4*/, false, false, false},
   };
   {
     const size_t src_ind = 5;
@@ -43,5 +43,43 @@ TEST(TestUtil, retrievePathsBackward)
     EXPECT_EQ(paths.size(), 1);
     EXPECT_EQ(paths.at(0).size(), 1);
     EXPECT_EQ(paths.at(0).at(0), 5);
+  }
+  {
+    const size_t src_ind = 4;
+    std::vector<std::vector<size_t>> paths;
+    autoware::behavior_velocity_planner::util::retrievePathsBackward(adjacency, src_ind, {}, paths);
+    EXPECT_EQ(paths.size(), 2);
+    // 4 --> 6
+    EXPECT_EQ(paths.at(0).size(), 2);
+    EXPECT_EQ(paths.at(0).at(0), 4);
+    EXPECT_EQ(paths.at(0).at(1), 6);
+    // 4 --> 7
+    EXPECT_EQ(paths.at(1).size(), 2);
+    EXPECT_EQ(paths.at(1).at(0), 4);
+    EXPECT_EQ(paths.at(1).at(1), 7);
+  }
+  {
+    const size_t src_ind = 0;
+    std::vector<std::vector<size_t>> paths;
+    autoware::behavior_velocity_planner::util::retrievePathsBackward(adjacency, src_ind, {}, paths);
+    EXPECT_EQ(paths.size(), 3);
+    // 0 --> 1 --> 2 --> 4 --> 6
+    EXPECT_EQ(paths.at(0).size(), 5);
+    EXPECT_EQ(paths.at(0).at(0), 0);
+    EXPECT_EQ(paths.at(0).at(1), 1);
+    EXPECT_EQ(paths.at(0).at(2), 2);
+    EXPECT_EQ(paths.at(0).at(3), 4);
+    EXPECT_EQ(paths.at(0).at(4), 6);
+    // 0 --> 1 --> 2 --> 4 --> 7
+    EXPECT_EQ(paths.at(1).at(0), 0);
+    EXPECT_EQ(paths.at(1).at(1), 1);
+    EXPECT_EQ(paths.at(1).at(2), 2);
+    EXPECT_EQ(paths.at(1).at(3), 4);
+    EXPECT_EQ(paths.at(1).at(4), 7);
+    // 0 --> 1 --> 3 --> 5
+    EXPECT_EQ(paths.at(2).at(0), 0);
+    EXPECT_EQ(paths.at(2).at(1), 1);
+    EXPECT_EQ(paths.at(2).at(2), 3);
+    EXPECT_EQ(paths.at(2).at(3), 5);
   }
 }
