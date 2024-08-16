@@ -20,7 +20,6 @@
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <geometry_msgs/msg/detail/point__struct.hpp>
 
-#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -142,11 +141,12 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
 
 double AbstractPlanningAlgorithm::getDistanceToObstacle(const geometry_msgs::msg::Pose & pose) const
 {
-  const auto index = pose2index(costmap_, pose, planner_common_param_.theta_size);
+  const auto local_pose = global2local(costmap_, pose);
+  const auto index = pose2index(costmap_, local_pose, planner_common_param_.theta_size);
   if (indexToId(index) >= static_cast<int>(edt_map_.size())) {
     return std::numeric_limits<double>::max();
   }
-  return getObstacleEDT(index).first;
+  return getObstacleEDT(index).distance;
 }
 
 void AbstractPlanningAlgorithm::computeEDTMap()
@@ -220,7 +220,7 @@ void AbstractPlanningAlgorithm::computeEDTMap()
       edt_map[indexToId(IndexXY{j, i})] = temporary_storage[i];
     }
   }
-  for(const auto & edt : edt_map){
+  for (const auto & edt : edt_map) {
     const double angle = std::atan2(edt.second.y, edt.second.x);
     edt_map_.push_back({edt.first, angle});
   }
@@ -323,7 +323,7 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
 
   if (detectBoundaryExit(base_index)) return true;
 
-  double obstacle_edt = getObstacleEDT(base_index).first;
+  double obstacle_edt = getObstacleEDT(base_index).distance;
 
   // if nearest obstacle is further than largest dimension, no collision is guaranteed
   // if nearest obstacle is closer than smallest dimension, collision is guaranteed
