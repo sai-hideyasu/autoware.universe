@@ -266,8 +266,8 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
 
   if (!occlusion_attention_divisions_) {
     occlusion_attention_divisions_ = generateDetectionLaneDivisions(
-      intersection_lanelets.occlusion_attention(), routing_graph_ptr,
-      planner_data_->occupancy_grid->info.resolution);
+      intersection_lanelets.occlusion_attention(), intersection_lanelets.attention_non_preceding(),
+      routing_graph_ptr, planner_data_->occupancy_grid->info.resolution);
   }
 
   if (has_traffic_light_) {
@@ -785,7 +785,8 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   }
 
   auto [attention_lanelets, original_attention_lanelet_sequences] =
-    util::mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr);
+    util::mergeLaneletsByTopologicalSort(
+      detection_and_preceding_lanelets, detection_lanelets, routing_graph_ptr);
 
   IntersectionLanelets result;
   result.attention_ = std::move(attention_lanelets);
@@ -909,7 +910,8 @@ std::optional<PathLanelets> IntersectionModule::generatePathLanelets(
 }
 
 std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLaneDivisions(
-  lanelet::ConstLanelets detection_lanelets_all,
+  const lanelet::ConstLanelets & occlusion_detection_lanelets,
+  const lanelet::ConstLanelets & conflicting_detection_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution) const
 {
   const double curvature_threshold =
@@ -919,9 +921,9 @@ std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLan
 
   using lanelet::utils::getCenterlineWithOffset;
 
-  // (0) remove left/right lanelet
+  // (0) remove curved
   lanelet::ConstLanelets detection_lanelets;
-  for (const auto & detection_lanelet : detection_lanelets_all) {
+  for (const auto & detection_lanelet : occlusion_detection_lanelets) {
     // TODO(Mamoru Sobue): instead of ignoring, only trim straight part of lanelet
     const auto fine_centerline =
       lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
@@ -933,8 +935,8 @@ std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLan
   }
 
   // (1) tsort detection_lanelets
-  const auto [merged_detection_lanelets, originals] =
-    util::mergeLaneletsByTopologicalSort(detection_lanelets, routing_graph_ptr);
+  const auto [merged_detection_lanelets, originals] = util::mergeLaneletsByTopologicalSort(
+    detection_lanelets, conflicting_detection_lanelets, routing_graph_ptr);
 
   // (2) merge each branch to one lanelet
   // NOTE: somehow bg::area() for merged lanelet does not work, so calculate it here
