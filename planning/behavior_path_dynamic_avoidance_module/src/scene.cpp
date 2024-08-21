@@ -36,6 +36,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
 namespace behavior_path_planner
 {
@@ -1401,10 +1403,14 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
     if (paths_lat_diff < min_paths_lat_diff) {
       return true;
     }
+    //std::cout << paths_lat_diff << std::endl;
+    
     // NOTE: When the input reference path laterally changes, the low-pass filter is disabled not to
     // shift the obstacle polygon suddenly.
     return false;
   }();
+
+  
 
   // calculate min/max lateral offset from object to path
   const auto obj_lat_abs_offset = [&]() {
@@ -1426,6 +1432,11 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
     const double obj_width_on_ego_path =
       std::min(max_obj_lat_abs_offset, planner_data_->parameters.vehicle_width / 2.0) -
       std::max(min_obj_lat_abs_offset, -planner_data_->parameters.vehicle_width / 2.0);
+
+      //std::stringstream ss;
+      //ss << std::setprecision(6) << "[DynamicAvoidance] obj_width_on_ego_path: " << obj_width_on_ego_path;
+      //RCLCPP_INFO_EXPRESSION(getLogger(), parameters_->enable_debug_info, ss.str().c_str());
+
     if (
       planner_data_->parameters.vehicle_width *
         parameters_->max_front_object_ego_path_lat_cover_ratio <
@@ -1840,7 +1851,7 @@ DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathRe
     generateLateralFeasiblePaths(getEgoPose(), getEgoSpeed());
 
   const double vehicle_half_width = planner_data_->parameters.vehicle_width * 0.5;
-  const double reserve_width_obj_side = vehicle_half_width - parameters_->max_lat_offset_to_avoid;
+  const double reserve_width_obj_side = vehicle_half_width - parameters_->max_lat_offset_to_avoid; // need to add negative value handler (prevent crash on max lat offset setting)
 
   const tier4_autoware_utils::Polygon2d left_avoid_poly = calcReservePoly(
     strategy::distance_asymmetric<double>(vehicle_half_width, reserve_width_obj_side),
