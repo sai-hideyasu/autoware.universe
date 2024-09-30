@@ -15,20 +15,19 @@
 #ifndef OBJECT_RECOGNITION_UTILS__CONVERSION_HPP_
 #define OBJECT_RECOGNITION_UTILS__CONVERSION_HPP_
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 
 namespace object_recognition_utils
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::TrackedObject;
+using autoware_perception_msgs::msg::TrackedObjects;
 
 DetectedObject toDetectedObject(const TrackedObject & tracked_object);
 DetectedObjects toDetectedObjects(const TrackedObjects & tracked_objects);
 TrackedObject toTrackedObject(const DetectedObject & detected_object);
-TrackedObjects toTrackedObjects(const DetectedObjects & detected_objects);
 }  // namespace object_recognition_utils
 
 #endif  // OBJECT_RECOGNITION_UTILS__CONVERSION_HPP_
