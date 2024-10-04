@@ -1,7 +1,12 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="localizer_mode"/>
+  <let name="frame_id" if="$(eval &quot;'$(var localizer_mode)'=='ekf_localizer'&quot;)" value="base_link"/>
+  <let name="frame_id" unless="$(eval &quot;'$(var localizer_mode)'=='ekf_localizer'&quot;)" value="ekf_base_link"/>
+
   <group>
     <include file="$(find-pkg-share ekf_localizer)/launch/ekf_localizer.launch.xml">
+      <arg name="localizer_mode" value="$(var localizer_mode)"/>
       <arg name="input_initial_pose_name" value="/initialpose3d"/>
       <arg name="input_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
       <arg name="input_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
@@ -13,6 +18,7 @@
       <arg name="output_twist_name" value="twist"/>
       <arg name="output_twist_with_covariance_name" value="twist_with_covariance"/>
       <arg name="param_file" value="$(var ekf_localizer_param_path)"/>
+      <arg name="frame_id" value="$(var frame_id)"/>
     </include>
   </group>
 

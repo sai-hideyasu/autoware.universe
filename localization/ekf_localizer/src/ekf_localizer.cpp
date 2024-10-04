@@ -262,7 +262,7 @@ void EKFLocalizer::timerTFCallback()
 
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped = tier4_autoware_utils::pose2transform(
-    ekf_module_->getCurrentPose(current_time, z, roll, pitch, false), "base_link");
+    ekf_module_->getCurrentPose(current_time, z, roll, pitch, false), params_.frame_id_);
   transform_stamped.header.stamp = current_time;
   tf_br_->sendTransform(transform_stamped);
 }
@@ -381,7 +381,7 @@ void EKFLocalizer::publishEstimateResult(
   nav_msgs::msg::Odometry odometry;
   odometry.header.stamp = current_ekf_pose.header.stamp;
   odometry.header.frame_id = current_ekf_pose.header.frame_id;
-  odometry.child_frame_id = "base_link";
+  odometry.child_frame_id = params_.frame_id_;
   odometry.pose = pose_cov.pose;
   odometry.twist = twist_cov.twist;
   pub_odom_->publish(odometry);

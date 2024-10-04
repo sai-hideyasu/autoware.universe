@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- parameter file -->
+  <arg name="gmps_param_file" default="$(find-pkg-share autoware_rainbow_launch)/config/localization/gmps_localizer.param.yaml"/>
+
+  <!-- topics -->
+  <arg name="in_prev_pose_name" default="/localization/pose_twist_fusion_filter/biased_pose_with_covariance"/>
+  <arg name="in_gmps_detect_name" default="/sensing/gmps/gmps_detect"/>
+  <arg name="in_velocity_name" default="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+
+  <group>
+    <push-ros-namespace namespace="gmps_localization"/>
+
+    <include file="$(find-pkg-share gmps_localizer)/launch/gmps_localizer.launch.xml">
+      <arg name="param_file" value="$(var gmps_param_file)"/>
+
+      <arg name="in_prev_pose" value="$(var in_prev_pose_name)"/>
+      <arg name="in_gmps_detect" value="$(var in_gmps_detect_name)"/>
+      <arg name="in_velocity" value="$(var in_velocity_name)"/>
+    </include>
+  </group>
+</launch>

@@ -159,6 +159,8 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   ndt_monte_carlo_initial_pose_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
+  is_converged_pub_ = this->create_publisher<tier4_debug_msgs::msg::BoolStamped>("is_converged", 10);
+  ndt_init_pub_ = this->create_publisher<std_msgs::msg::Bool>("ndt_init", rclcpp::QoS(1).transient_local());
 
   service_ = this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
@@ -189,6 +191,10 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
     std::make_unique<DiagnosticsModule>(this, "trigger_node_service_status");
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  std_msgs::msg::Bool msg_init;
+  msg_init.data = true;
+  ndt_init_pub_->publish(msg_init);
 }
 
 void NDTScanMatcher::callback_timer()
@@ -651,6 +657,11 @@ void NDTScanMatcher::publish_pose(
     ndt_pose_pub_->publish(result_pose_stamped_msg);
     ndt_pose_with_covariance_pub_->publish(result_pose_with_cov_msg);
   }
+
+  tier4_debug_msgs::msg::BoolStamped msg_is_converged;
+  msg_is_converged.stamp = this->now();
+  msg_is_converged.data = is_converged;
+  is_converged_pub_->publish(msg_is_converged);
 }
 
 void NDTScanMatcher::publish_point_cloud(
@@ -886,9 +897,16 @@ void NDTScanMatcher::service_ndt_align(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
+  std_msgs::msg::Bool msg_init;
+  msg_init.data = true;
+  ndt_init_pub_->publish(msg_init);
+
   diagnostics_ndt_align_->clear();
 
   service_ndt_align_main(req, res);
+
+  msg_init.data = false;
+  ndt_init_pub_->publish(msg_init);
 
   // check is_succeed_service
   bool is_succeed_service = res->success;

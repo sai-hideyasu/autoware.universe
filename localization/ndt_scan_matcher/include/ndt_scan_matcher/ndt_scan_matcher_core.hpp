@@ -34,6 +34,7 @@
 #include <std_srvs/srv/set_bool.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
+#include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -67,6 +68,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <std_msgs/msg/bool.hpp>
 
 class NDTScanMatcher : public rclcpp::Node
 {
@@ -174,6 +177,8 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr ndt_marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     ndt_monte_carlo_initial_pose_marker_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr is_converged_pub_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ndt_init_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;

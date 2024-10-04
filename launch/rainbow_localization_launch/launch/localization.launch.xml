@@ -12,11 +12,13 @@
   <arg name="ndt_scan_matcher/ndt_scan_matcher_param_path"/>
 
   <!-- Parameter files -->
+  <arg name="vehicle_param_file"/>
   <arg name="localization_error_monitor_param_path"/>
   <arg name="ekf_localizer_param_path"/>
   <arg name="pose_initializer_param_path"/>
   <arg name="eagleye_param_path"/>
   <arg name="ar_tag_based_localizer_param_path"/>
+  <arg name="localizer_mode"/>
 
   <arg name="input_pointcloud" default="/sensing/lidar/concatenated/pointcloud"/>
   <arg name="localization_pointcloud_container_name" default="/pointcloud_container"/>
@@ -29,10 +31,24 @@
       <arg name="localization_pointcloud_container_name" value="$(var localization_pointcloud_container_name)"/>
     </include>
 
+    <!-- gmps_localizer module -->
+    <include file="$(find-pkg-share rainbow_localization_launch)/launch/gmps_localizer/gmps_localizer.launch.xml">
+    </include>
+
     <!-- pose_twist_fusion_filter module -->
     <group>
       <push-ros-namespace namespace="pose_twist_fusion_filter"/>
-      <include file="$(find-pkg-share rainbow_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml"/>
+      <include file="$(find-pkg-share rainbow_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml">
+        <arg name="localizer_mode" value="$(var localizer_mode)"/>
+      </include>
+    </group>
+
+    <!-- ekf_aichi_localizer module -->
+    <group>
+      <include file="$(find-pkg-share rainbow_localization_launch)/launch/ekf_aichi_localizer/ekf_aichi_localizer.launch.xml">
+        <arg name="localizer_mode" value="$(var localizer_mode)"/>
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+      </include>
     </group>
 
     <!-- localization_error_monitor_module -->

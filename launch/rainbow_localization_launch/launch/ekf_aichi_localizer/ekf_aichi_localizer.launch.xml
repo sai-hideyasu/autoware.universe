@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- parameter file -->
+  <arg name="ekf_aichi_param_file" default="$(find-pkg-share autoware_rainbow_launch)/config/localization/ekf_aichi_localizer.param.yaml"/>
+  <arg name="vehicle_param_file"/>
+  <arg name="localizer_mode"/>
+
+  <!-- health_check_measurement -->
+  <arg name="in_ndt_is_converged_name" default="/localization/pose_estimator/is_converged"/>
+  <arg name="in_gps_fix" default="/sensing/gnss/novatel_oem7/isa100/gps"/>
+
+  <!-- ekf_aichi_localizer topics -->
+  <arg name="in_ndt_pose_name" default="/localization/pose_twist_fusion_filter/biased_pose_with_covariance"/>
+  <arg name="in_autoware_ekf_twist" default="/localization/pose_twist_fusion_filter/twist_with_covariance"/>
+  <arg name="in_gnss_pose_name" default="/sensing/gnss/novatel_oem7/isa100/pose_with_covariance"/>
+  <arg name="in_gmps_pose_name" default="/localization/gmps_localization/gmps_pose_cov"/>
+  <arg name="in_velocity" default="/localization/twist_estimator/twist_with_covariance"/>
+  <arg name="ndt_init" default="/localization/pose_estimator/ndt_init"/>
+
+  <let name="twist_frame_id" if="$(eval &quot;'$(var localizer_mode)'=='ekf_aichi_localizer'&quot;)" value="base_link"/>
+  <let name="twist_frame_id" unless="$(eval &quot;'$(var localizer_mode)'=='ekf_aichi_localizer'&quot;)" value="aichi_base_link"/>
+
+  <group>
+    <push-ros-namespace namespace="ekf_aichi_localization"/>
+
+    <include file="$(find-pkg-share ekf_aichi_localizer2)/launch/health_check_measurement.launch.xml">
+      <arg name="ekf_aichi_param_file" value="$(var ekf_aichi_param_file)"/>
+      <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+
+      <arg name="in_ndt_is_converged_name" value="$(var in_ndt_is_converged_name)"/>
+      <arg name="in_gps_fix" value="$(var in_gps_fix)"/>
+    </include>
+
+    <include file="$(find-pkg-share ekf_aichi_localizer2)/launch/ekf_aichi_localizer.launch.xml">
+      <arg name="param_file" value="$(var param_file)"/>
+
+      <arg name="in_ndt_pose_name" value="$(var in_ndt_pose_name)"/>
+      <arg name="in_autoware_ekf_twist" value="$(var in_autoware_ekf_twist)"/>
+      <arg name="in_gnss_pose_name" value="$(var in_gnss_pose_name)"/>
+      <arg name="in_gmps_pose_name" value="$(var in_gmps_pose_name)"/>
+      <arg name="twist_frame_id" value="$(var twist_frame_id)"/>
+      <arg name="in_velocity_name" value="$(var in_velocity)"/>
+      <arg name="ndt_init" value="$(var ndt_init)"/>
+    </include>
+  </group>
+</launch>

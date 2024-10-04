@@ -24,7 +24,8 @@ class HyperParameters
 {
 public:
   explicit HyperParameters(rclcpp::Node * node)
-  : show_debug_info(node->declare_parameter<bool>("node.show_debug_info")),
+  : frame_id_(node->declare_parameter<std::string>("frame_id")),
+    show_debug_info(node->declare_parameter<bool>("node.show_debug_info")),
     ekf_rate(node->declare_parameter<double>("node.predict_frequency")),
     ekf_dt(1.0 / std::max(ekf_rate, 0.1)),
     tf_rate_(node->declare_parameter<double>("node.tf_rate")),
@@ -62,6 +63,7 @@ public:
   {
   }
 
+  const std::string frame_id_;
   const bool show_debug_info;
   const double ekf_rate;
   const double ekf_dt;

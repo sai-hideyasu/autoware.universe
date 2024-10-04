@@ -17,6 +17,8 @@
   <arg name="output_twist_name" default="ekf_twist"/>
   <arg name="output_twist_with_covariance_name" default="ekf_twist_with_covariance"/>
 
+  <arg name="frame_id" default="base_link"/>
+
   <node pkg="ekf_localizer" exec="ekf_localizer" name="ekf_localizer" output="screen">
     <remap from="in_pose_with_covariance" to="$(var input_pose_with_cov_name)"/>
 
@@ -34,5 +36,6 @@
     <remap from="ekf_twist_with_covariance" to="$(var output_twist_with_covariance_name)"/>
 
     <param from="$(var param_file)"/>
+    <param name="frame_id" value="$(var frame_id)"/>
   </node>
 </launch>
