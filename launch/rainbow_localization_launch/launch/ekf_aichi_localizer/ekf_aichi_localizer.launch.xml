@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
   <!-- parameter file -->
-  <arg name="ekf_aichi_param_file" default="$(find-pkg-share autoware_rainbow_launch)/config/localization/ekf_aichi_localizer.param.yaml"/>
-  <arg name="vehicle_param_file"/>
   <arg name="localizer_mode"/>
 
   <!-- health_check_measurement -->
@@ -24,7 +22,7 @@
     <push-ros-namespace namespace="ekf_aichi_localization"/>
 
     <include file="$(find-pkg-share ekf_aichi_localizer2)/launch/health_check_measurement.launch.xml">
-      <arg name="ekf_aichi_param_file" value="$(var ekf_aichi_param_file)"/>
+      <arg name="ekf_aichi_param_file" value="$(var ekf_aichi_localizer_param_path)"/>
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
 
       <arg name="in_ndt_is_converged_name" value="$(var in_ndt_is_converged_name)"/>

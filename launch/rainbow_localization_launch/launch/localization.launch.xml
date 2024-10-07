@@ -18,6 +18,8 @@
   <arg name="pose_initializer_param_path"/>
   <arg name="eagleye_param_path"/>
   <arg name="ar_tag_based_localizer_param_path"/>
+  <arg name="gmps_localizer_param_path"/>
+  <arg name="ekf_aichi_localizer_param_path"/>
   <arg name="localizer_mode"/>
 
   <arg name="input_pointcloud" default="/sensing/lidar/concatenated/pointcloud"/>
