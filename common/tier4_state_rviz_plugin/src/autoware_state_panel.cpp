@@ -161,32 +161,15 @@ QGroupBox * AutowareStatePanel::makeLocalizationGroup()
   auto * group = new QGroupBox("Localization");
   auto * grid = new QGridLayout;
 
-  localization_label_ptr_top_ = new QLabel("INIT");
-  localization_label_ptr_top_->setAlignment(Qt::AlignCenter);
-  localization_label_ptr_top_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(localization_label_ptr_top_, 0, 0);
+  localization_label_ptr_ = new QLabel("INIT");
+  localization_label_ptr_->setAlignment(Qt::AlignCenter);
+  localization_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(localization_label_ptr_, 0, 0);
 
-  localization_label_ptr_left_ = new QLabel("INIT");
-  localization_label_ptr_left_->setAlignment(Qt::AlignCenter);
-  localization_label_ptr_left_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(localization_label_ptr_left_, 0, 1);
+  init_by_gnss_button_ptr_ = new QPushButton("Init by GNSS");
+  connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
+  grid->addWidget(init_by_gnss_button_ptr_, 1, 0);
 
-  localization_label_ptr_right_ = new QLabel("INIT");
-  localization_label_ptr_right_->setAlignment(Qt::AlignCenter);
-  localization_label_ptr_right_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(localization_label_ptr_right_, 0, 2);
-
-  init_by_gnss_button_ptr_top_ = new QPushButton("GTOP");
-  connect(init_by_gnss_button_ptr_top_, SIGNAL(clicked()), SLOT(onClickInitByGnssTop()));
-  grid->addWidget(init_by_gnss_button_ptr_top_, 1, 0);
-
-  init_by_gnss_button_ptr_left_ = new QPushButton("GLEFT");
-  connect(init_by_gnss_button_ptr_left_, SIGNAL(clicked()), SLOT(onClickInitByGnssLeft()));
-  grid->addWidget(init_by_gnss_button_ptr_left_, 1, 1);
-
-  init_by_gnss_button_ptr_right_ = new QPushButton("GRIGHT");
-  connect(init_by_gnss_button_ptr_right_, SIGNAL(clicked()), SLOT(onClickInitByGnssRight()));
-  grid->addWidget(init_by_gnss_button_ptr_right_, 1, 2);
   group->setLayout(grid);
   return group;
 }
@@ -266,22 +249,12 @@ void AutowareStatePanel::onInitialize()
   client_clear_route_ = raw_node_->create_client<ClearRoute>("/api/routing/clear_route");
 
   // Localization
-  sub_localization_top_ = raw_node_->create_subscription<LocalizationInitializationState>(
-    "/api/localization/initialization_state/top", rclcpp::QoS{1}.transient_local(),
-    std::bind(&AutowareStatePanel::onLocalizationTop, this, _1));
-  sub_localization_left_ = raw_node_->create_subscription<LocalizationInitializationState>(
-    "/api/localization/initialization_state/left", rclcpp::QoS{1}.transient_local(),
-    std::bind(&AutowareStatePanel::onLocalizationLeft, this, _1));
-  sub_localization_right_ = raw_node_->create_subscription<LocalizationInitializationState>(
-    "/api/localization/initialization_state/right", rclcpp::QoS{1}.transient_local(),
-    std::bind(&AutowareStatePanel::onLocalizationRight, this, _1));
+  sub_localization_ = raw_node_->create_subscription<LocalizationInitializationState>(
+    "/api/localization/initialization_state", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onLocalization, this, _1));
 
-  client_init_by_gnss_top_ =
-    raw_node_->create_client<InitializeLocalization>("/api/localization/initialize/top");
-  client_init_by_gnss_left_ =
-    raw_node_->create_client<InitializeLocalization>("/api/localization/initialize/left");
-  client_init_by_gnss_right_ =
-    raw_node_->create_client<InitializeLocalization>("/api/localization/initialize/right");
+  client_init_by_gnss_ =
+    raw_node_->create_client<InitializeLocalization>("/api/localization/initialize");
 
   // Motion
   sub_motion_ = raw_node_->create_subscription<MotionState>(

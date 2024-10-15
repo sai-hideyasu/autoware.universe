@@ -18,30 +18,12 @@
 TEST(localization, interface)
 {
   {
-    using localization_interface::InitializationStateTop;
-    InitializationStateTop initialization_state_top;
+    using localization_interface::InitializationState;
+    InitializationState initialization_state;
     size_t depth = 1;
-    EXPECT_EQ(initialization_state_top.depth, depth);
-    EXPECT_EQ(initialization_state_top.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(initialization_state_top.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-  }
-
-  {
-    using localization_interface::InitializationStateLeft;
-    InitializationStateLeft initialization_state_left;
-    size_t depth = 1;
-    EXPECT_EQ(initialization_state_left.depth, depth);
-    EXPECT_EQ(initialization_state_left.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(initialization_state_left.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-  }
-
-  {
-    using localization_interface::InitializationStateRight;
-    InitializationStateRight initialization_state_right;
-    size_t depth = 1;
-    EXPECT_EQ(initialization_state_right.depth, depth);
-    EXPECT_EQ(initialization_state_right.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(initialization_state_right.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    EXPECT_EQ(initialization_state.depth, depth);
+    EXPECT_EQ(initialization_state.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(initialization_state.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 
   {
