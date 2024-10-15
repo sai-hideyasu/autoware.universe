@@ -23,16 +23,46 @@
 namespace autoware_ad_api::localization
 {
 
-struct Initialize
+struct InitializeTop
 {
   using Service = autoware_adapi_v1_msgs::srv::InitializeLocalization;
-  static constexpr char name[] = "/api/localization/initialize";
+  static constexpr char name[] = "/api/localization/initialize/top";
 };
 
-struct InitializationState
+struct InitializeLeft
+{
+  using Service = autoware_adapi_v1_msgs::srv::InitializeLocalization;
+  static constexpr char name[] = "/api/localization/initialize/left";
+};
+
+struct InitializeRight
+{
+  using Service = autoware_adapi_v1_msgs::srv::InitializeLocalization;
+  static constexpr char name[] = "/api/localization/initialize/right";
+};
+
+struct InitializationStateTop
 {
   using Message = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
-  static constexpr char name[] = "/api/localization/initialization_state";
+  static constexpr char name[] = "/api/localization/initialization_state/top";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+};
+
+struct InitializationStateLeft
+{
+  using Message = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  static constexpr char name[] = "/api/localization/initialization_state/left";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+};
+
+struct InitializationStateRight
+{
+  using Message = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  static constexpr char name[] = "/api/localization/initialization_state/right";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
