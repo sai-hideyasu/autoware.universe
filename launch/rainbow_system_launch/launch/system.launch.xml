@@ -8,6 +8,12 @@
   <arg name="mrm_emergency_stop_operator_param_path"/>
   <arg name="system_error_monitor_param_path"/>
   <arg name="system_error_monitor_planning_simulator_param_path"/>
+  <arg name="diagnostic_aggregator_control_param_path"/>
+  <arg name="diagnostic_aggregator_localization_param_path"/>
+  <arg name="diagnostic_aggregator_map_param_path"/>
+  <arg name="diagnostic_aggregator_perception_param_path"/>
+  <arg name="diagnostic_aggregator_planning_param_path"/>
+  <arg name="diagnostic_aggregator_sensing_param_path"/>
   <arg name="diagnostic_aggregator_system_param_path"/>
   <arg name="diagnostic_aggregator_vehicle_param_path"/>
   <arg name="dummy_diag_publisher_param_path"/>
@@ -77,6 +83,14 @@
       <let name="config_file" value="$(var system_error_monitor_planning_simulator_param_path)" if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)"/>
       <include file="$(find-pkg-share system_error_monitor)/launch/system_error_monitor.launch.xml">
         <arg name="config_file" value="$(var config_file)"/>
+        <arg name="agg_config_file_control" value="$(var diagnostic_aggregator_control_param_path)"/>
+        <arg name="agg_config_file_localization" value="$(var diagnostic_aggregator_localization_param_path)"/>
+        <arg name="agg_config_file_map" value="$(var diagnostic_aggregator_map_param_path)"/>
+        <arg name="agg_config_file_perception" value="$(var diagnostic_aggregator_perception_param_path)"/>
+        <arg name="agg_config_file_planning" value="$(var diagnostic_aggregator_planning_param_path)"/>
+        <arg name="agg_config_file_sensing" value="$(var diagnostic_aggregator_sensing_param_path)"/>
+        <arg name="agg_config_file_system" value="$(var diagnostic_aggregator_system_param_path)"/>
+        <arg name="agg_config_file_vehicle" value="$(var diagnostic_aggregator_vehicle_param_path)"/>
         <arg name="extra_agg_config_file_sensing" value="$(var sensor_launch_pkg)/config/diagnostic_aggregator/sensor_kit.param.yaml"/>
         <arg name="extra_agg_config_file_system" value="$(var diagnostic_aggregator_system_param_path)"/>
         <arg name="extra_agg_config_file_vehicle" value="$(var diagnostic_aggregator_vehicle_param_path)"/>
