@@ -517,7 +517,7 @@ void AutowareErrorMonitor::appendHazardDiag(
     }
   }
 
-  RCLCPP_INFO_STREAM(get_logger(), "aaaaaaaaaaaaa:" << +hazard_status->level);
+  //RCLCPP_INFO_STREAM(get_logger(), "aaaaaaaaaaaaa:" << +hazard_status->level);
   hazard_status->level = std::max(hazard_status->level, hazard_level);
 }
 

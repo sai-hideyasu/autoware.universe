@@ -208,7 +208,8 @@
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar&quot;')">
     <!-- Lidar dnn-based detectors-->
     <include file="$(find-pkg-share rainbow_perception_launch)/launch/object_recognition/detection/detector/lidar_dnn_detector.launch.xml">
-      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+      <!--arg name="input/pointcloud" value="$(var input/pointcloud)"/-->
+      <arg name="input/pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
     </include>
     <!-- Lidar rule-based detectors-->
