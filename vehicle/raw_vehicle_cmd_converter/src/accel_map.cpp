@@ -34,9 +34,9 @@ bool AccelMap::readAccelMapFromCSV(const std::string & csv_path, const bool vali
     return false;
   }
 
-  vehicle_name_ = table[0][0];
-  vel_index_ = CSVLoader::getRowIndex(table);
-  throttle_index_ = CSVLoader::getColumnIndex(table);
+  vehicle_name_ = table[0][0];//左上の文字列
+  vel_index_ = CSVLoader::getRowIndex(table);//列要素名(速度)
+  throttle_index_ = CSVLoader::getColumnIndex(table);//行要素名
   accel_map_ = CSVLoader::getMap(table);
   if (validation && !CSVLoader::validateMap(accel_map_, true)) {
     return false;

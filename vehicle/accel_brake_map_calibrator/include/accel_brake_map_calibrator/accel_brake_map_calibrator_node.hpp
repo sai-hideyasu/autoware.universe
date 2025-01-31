@@ -35,6 +35,7 @@
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/multi_array_dimension.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/float64.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"
@@ -106,6 +107,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr updated_map_error_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr jerk_pub_;
 
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;

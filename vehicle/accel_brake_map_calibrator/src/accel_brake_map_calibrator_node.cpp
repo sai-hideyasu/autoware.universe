@@ -202,6 +202,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   map_error_ratio_pub_ = create_publisher<Float32Stamped>("~/output/map_error_ratio", durable_qos);
   offset_covariance_pub_ =
     create_publisher<Float32MultiArray>("~/debug/offset_covariance", durable_qos);
+  jerk_pub_ = create_publisher<std_msgs::msg::Float64>("jerk", rclcpp::QoS(1));
 
   // subscriber
   using std::placeholders::_1;
@@ -489,6 +490,10 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
     debug_values_.data.at(CURRENT_JERK) = jerk_;
     pre_acceleration_ = acceleration_;
     pre_acceleration_time_ = acceleration_time_;
+
+    std_msgs::msg::Float64 msg_jerk;
+    msg_jerk.data = jerk_;
+    jerk_pub_->publish(msg_jerk);
   }
 
   debug_values_.data.at(CURRENT_SPEED) = twist_msg->twist.linear.x;
@@ -542,7 +547,7 @@ void AccelBrakeMapCalibrator::callbackActuationCommand(
   const ActuationCommandStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
-  const auto accel = msg->actuation.accel_cmd;
+  const auto accel = msg->actuation.accel_cmd * 1.6;
   const auto brake = msg->actuation.brake_cmd;
   callbackActuation(header, accel, brake);
 }
