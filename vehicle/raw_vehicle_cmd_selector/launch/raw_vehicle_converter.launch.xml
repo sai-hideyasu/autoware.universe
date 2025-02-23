@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- gearタグはautoware_auto_vehicle_msgs::GearReportのDRIVE定数 -->
+  <arg name="gear1" default="2"/>
+  <arg name="gear2" default="3"/>
+
+  <arg name="cmd1" default="/control/command/actuation_cmd1"/>
+  <arg name="cmd2" default="/control/command/actuation_cmd2"/>
+
+  <node pkg="raw_vehicle_cmd_selector" exec="raw_vehicle_cmd_selector" name="raw_vehicle_cmd_selector" output="screen">
+    <param name="gear1" value="$(var gear1)"/>
+    <param name="gear2" value="$(var gear2)"/>
+
+    <param name="cmd1" value="$(var cmd1)"/>
+    <param name="cmd2" value="$(var cmd2)"/>
+  </node>
+</launch>

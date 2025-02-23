@@ -33,10 +33,6 @@
       <arg name="localization_pointcloud_container_name" value="$(var localization_pointcloud_container_name)"/>
     </include>
 
-    <!-- gmps_localizer module -->
-    <include file="$(find-pkg-share ergamio_localization_launch)/launch/gmps_localizer/gmps_localizer.launch.xml">
-    </include>
-
     <!-- pose_twist_fusion_filter module -->
     <group>
       <push-ros-namespace namespace="pose_twist_fusion_filter"/>
@@ -50,6 +46,37 @@
       <include file="$(find-pkg-share ergamio_localization_launch)/launch/ekf_aichi_localizer/ekf_aichi_localizer.launch.xml">
         <arg name="localizer_mode" value="$(var localizer_mode)"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+      </include>
+    </group>
+
+    <!-- gmps_driver & gmps_localization (磁気マーカー) -->
+    <group>
+      <push-ros-namespace namespace="gmps_localization"/>
+      <include file="$(find-pkg-share kvaser_interface)/launch/kvaser_bridge.launch.xml">
+        <arg name="hardware_id" value="130674" />
+        <arg name="circuit_id" value="0" />
+        <arg name="bit_rate" value="500000" />
+      </include>
+
+      <include file="$(find-pkg-share gmps_driver)/launch/gmps_driver.launch.xml">
+        <arg name="param_file" value="$(find-pkg-share gmps_driver)/config/gmsp_driver.param.yaml"/>
+        <arg name="in_velocity_name" value="/vehicle/status/velocity_status"/>
+        <arg name="in_soft_reset_name" value="gmps_soft_reset"/>
+        <arg name="in_gmps_can_frame_name" value="can_tx"/>
+        <arg name="out_gmps_can_frame_name" value="can_rx"/>
+        <arg name="out_gmps_detect_name" value="gmps_detect"/>
+        <arg name="out_gmps_error_name" value="gmps_error"/>
+      </include>
+
+      <include file="$(find-pkg-share gmps_localizer)/launch/gmps_localizer.launch.xml">
+        <arg name="param_file" value="$(find-pkg-share gmps_localizer)/config/gmps_localizer.param.yaml"/>
+        <arg name="marker_table_csv_name" value="/home/sit/autoware_rainbow_tier4/src/localization/gmps_driver/DATA/FUKAYA_MGRS_20241122.csv"/>
+        <arg name="in_prev_pose_name" value="/localization/ekf_aichi_localization/ekf_aichi_pose_with_covariance"/>
+        <arg name="in_gmps_detect_name" value="gmps_detect"/>
+        <arg name="in_rfid_name" value="rfid"/>
+        <arg name="in_velocity_name" value="/vehicle/status/velocity_status"/>
+        <arg name="out_gmps_pose_name" value="gmps_pose_cov"/>
+        <arg name="out_gmps_log_name" value="gmps_log"/>
       </include>
     </group>
 

@@ -10,6 +10,12 @@ ament_auto_add_executable(accel_brake_map_calibrator
 )
 ament_target_dependencies(accel_brake_map_calibrator)
 
+ament_auto_add_executable(accel_brake_map_calibrator_gear
+  src/accel_brake_map_calibrator_node_gear.cpp
+  src/main_gear.cpp
+)
+ament_target_dependencies(accel_brake_map_calibrator_gear)
+
 install(
   PROGRAMS
   scripts/__init__.py

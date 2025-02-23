@@ -26,4 +26,15 @@
       <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
     </include>
   </group>
+
+  <!-- j1939 vehicle status -->
+  <group>
+    <push-ros-namespace namespace="/sensing/vehicle/vcan"/>
+    <include file="$(find-pkg-share kvaser_interface)/launch/kvaser_bridge.launch.xml">
+      <arg name="hardware_id" value="97801" />
+      <arg name="circuit_id" value="0" />
+      <arg name="bit_rate" value="500000" />
+    </include>
+    <node pkg="vehicle_can_info" exec="main" name="vehicle_info_publisher" output="screen"></node>
+  </group>
 </launch>
