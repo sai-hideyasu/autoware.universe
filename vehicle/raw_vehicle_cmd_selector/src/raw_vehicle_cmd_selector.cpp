@@ -1,4 +1,5 @@
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <tier4_vehicle_msgs/msg/actuation_command_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 
@@ -14,7 +15,7 @@ private://ros node
 	rclcpp::Node *node_;
 
 private://ros publisher
-	rclcpp::Publisher<tier4_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr pub_cmd_;//現在のgearが担当のgearと同じ場合、subscibeしたtopicをpublishする RawVehicleCmdSelectorで同じインスタンスを渡す
+	rclcpp::Publisher<tier4_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr pub_cmd_;//現在のgearが担当のgearと同じ場合、subscribeしたtopicをpublishする RawVehicleCmdSelectorで同じインスタンスを渡す
 
 private://ros subscriber
 	rclcpp::Subscription<tier4_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr sub_cmd_;//各GEARのraw_vehicle_converterからのコマンドtopic
@@ -40,20 +41,44 @@ private:
 	}
 };
 
-uint8_t RawVehicleCmdSelectPublisher::gear_report_ = autoware_auto_vehicle_msgs::msg::GearReport::DRIVE;;
+uint8_t RawVehicleCmdSelectPublisher::gear_report_ = autoware_auto_vehicle_msgs::msg::GearReport::DRIVE;
 
 
 class RawVehicleCmdSelector : public rclcpp::Node
 {
+private:
+	int engine_rotate_count_;//vcanから取得したエンジン回転数
+
+private://ros publisher
+	std::vector<std::shared_ptr<RawVehicleCmdSelectPublisher>> publishers_;//各GEARのraw_vehicle_converterからのコマンドtopic
+	rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr pub_select_gear_report_;//現在選択されているGEAR
+
 private://ros subscriber
 	rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_report_;//車両gear情報
-	std::vector<std::shared_ptr<RawVehicleCmdSelectPublisher>> publishers_;//各GEARのraw_vehicle_converterからのコマンドtopic
+	rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr sub_engine_rotate_count_;//vcanから取得したエンジン回転数
 
 public://init
 	RawVehicleCmdSelector(const rclcpp::NodeOptions &options) noexcept(false)
 		: rclcpp::Node("raw_vehicle_cmd_selector", options)
+		, engine_rotate_count_(0)
 		, publishers_(createPublishers())
+		, pub_select_gear_report_(create_publisher<autoware_auto_vehicle_msgs::msg::GearReport>("select_gear", rclcpp::QoS(1).transient_local()))
+		, sub_gear_report_(create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>("gear_report", rclcpp::QoS(1),
+			[this](const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr report)
+			{
+				RawVehicleCmdSelectPublisher::gear_report_ = report->report;
+				pub_select_gear_report_->publish(*report);
+			}))
+		, sub_engine_rotate_count_(create_subscription<std_msgs::msg::Float32>("engine_rotate_count", rclcpp::QoS(1),
+			[this](const std_msgs::msg::Float32::ConstSharedPtr count)
+			{
+				engine_rotate_count_ = count->data;
+			}))
 	{
+		autoware_auto_vehicle_msgs::msg::GearReport msg_select_gear;
+		msg_select_gear.stamp = this->now();
+		msg_select_gear.report = RawVehicleCmdSelectPublisher::gear_report_;
+		pub_select_gear_report_->publish(msg_select_gear);
 	}
 
 private://init
@@ -84,13 +109,6 @@ private://init
 		catch(const std::runtime_error &e){ throw(e); }
 
 		return pubs;
-	}
-
-private://ros subscriber
-	//車両gear情報
-	void callbackGearReport(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr report)
-	{
-		RawVehicleCmdSelectPublisher::gear_report_ = report->report;
 	}
 };
 

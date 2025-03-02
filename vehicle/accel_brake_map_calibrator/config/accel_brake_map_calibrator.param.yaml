@@ -1,15 +1,15 @@
 /**:
   ros__parameters:
     update_hz: 10.0
-    initial_covariance: 0.05
-    velocity_min_threshold: 0.1
+    initial_covariance: 0.50 #0.05 #初期化用MAPの数値が0の場合は、この値を大きくする必要がある
+    velocity_min_threshold: 0.2 #0.1 
     velocity_diff_threshold: 0.556
-    pedal_diff_threshold: 0.03
+    pedal_diff_threshold: 0.05 #0.03 #ペダルを踏む速度(絶対値)がこのしきい値以上の場合は、現在のデータをキャリブレーションに使用しない
     max_steer_threshold: 0.2
     max_pitch_threshold: 0.02
     max_jerk_threshold: 0.7
-    pedal_velocity_thresh: 0.15
-    pedal_to_accel_delay: 0.3
+    pedal_velocity_thresh: 0.15 #0.15 #ペダルを踏む速度がこのしきい値以上の場合は、現在のデータをキャリブレーションに使用しない
+    pedal_to_accel_delay: 0.25 #0.14 #0.3 ペダルコマンド入力時から実際に加速するまでの時間
     max_accel: 5.0
     min_accel: -5.0
     max_data_count: 100
@@ -18,3 +18,4 @@
     update_suggest_thresh: 0.7 # threshold of rmse rate that update suggest flag becomes true. ( rmse_rate: [rmse of update map] / [rmse of original map] )
     progress_file_output: false # flag to output log file
     accel_brake_value_source: "command" # "status" or "command"
+    get_pitch_method: "tf"

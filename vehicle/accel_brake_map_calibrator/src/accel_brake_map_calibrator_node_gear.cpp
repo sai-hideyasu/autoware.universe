@@ -74,8 +74,9 @@ AccelBrakeMapCalibratorGear::AccelBrakeMapCalibratorGear(const rclcpp::NodeOptio
 
   update_suggest_thresh_ = declare_parameter<double>("update_suggest_thresh", 0.7);
   csv_calibrated_map_dir_ = declare_parameter("csv_calibrated_map_dir", std::string(""));
-  output_accel_file_ = csv_calibrated_map_dir_ + "/accel_map.csv";
-  output_brake_file_ = csv_calibrated_map_dir_ + "/brake_map.csv";
+  output_accel_file_ = csv_calibrated_map_dir_ + "/accel_map_" + std::string(this->get_namespace()).substr(1) + ".csv";
+  output_brake_file_ = csv_calibrated_map_dir_ + "/brake_map_" + std::string(this->get_namespace()).substr(1) + ".csv";
+
   const std::string update_method_str =
     declare_parameter("update_method", std::string("update_offset_each_cell"));
   if (update_method_str == std::string("update_offset_each_cell")) {
@@ -238,6 +239,19 @@ AccelBrakeMapCalibratorGear::AccelBrakeMapCalibratorGear(const rclcpp::NodeOptio
   initOutputCSVTimer(30.0);
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  accel_map_offset_vec_ = Map(
+    accel_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
+  brake_map_offset_vec_ = Map(
+    brake_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
+  accel_covariance_mat_ = std::vector<std::vector<Eigen::MatrixXd>>(
+    accel_map_value_.size() - 1,
+    std::vector<Eigen::MatrixXd>(
+      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
+  brake_covariance_mat_ = std::vector<std::vector<Eigen::MatrixXd>>(
+    brake_map_value_.size() - 1,
+    std::vector<Eigen::MatrixXd>(
+      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
 }
 
 void AccelBrakeMapCalibratorGear::initOutputCSVTimer(double period_s)
@@ -297,15 +311,14 @@ void AccelBrakeMapCalibratorGear::timerCallback()
                               << "too_large_jerk_count: " << too_large_jerk_count_ << "\n\t"
                               << "invalid_acc_brake_count: " << invalid_acc_brake_count_ << "\n\t"
                               << "too_large_pedal_spd_count: " << too_large_pedal_spd_count_ << "\n\t"
-                              << "too_large_pedal_spd_count: " << too_gear_count_
-                              << "\n\t"
+                              << "too_gear_count: " << too_gear_count_ << "\n\t"
                               << "update_fail_count_: " << update_fail_count_ << "\n");
 
   /* valid check */
 
   // data check
   if (
-    !twist_ptr_ || !steer_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ || !gear_ptr_ ||
+    !twist_ptr_ || !steer_ptr_ || !gear_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ ||
     !delayed_accel_pedal_ptr_ || !delayed_brake_pedal_ptr_) {
     // lack of data
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -418,6 +431,7 @@ void AccelBrakeMapCalibratorGear::timerCallback()
   //gear check
   if(
     gear_ptr_->report != select_gear_) {
+    /*!(gear_ptr_->report == select_gear_ || gear_ptr_->report == select_gear_-1)) {*/
     too_gear_count_++;
     return;
   }
@@ -835,8 +849,19 @@ bool AccelBrakeMapCalibratorGear::updateAccelBrakeMap()
   }
 
   // take consistency of map
-  takeConsistencyOfAccelMap();
-  takeConsistencyOfBrakeMap();
+  //この関数を処理してしまうと計算したmapセルの加速度が後ろの列(速度側)の加速度に上書きされてしまうのでカット
+  //手動調整が多くなると考えられる
+  //takeConsistencyOfAccelMap();
+  //takeConsistencyOfBrakeMap();
+
+  /*std::cout << "accel_mode," << std::boolalpha << accel_mode << "  accel_pedal_index," << accel_pedal_index << std::endl;
+  for(size_t i=0; i<update_accel_map_value_.size(); i++)
+  {
+    std::vector<double> a = update_accel_map_value_.at(i);
+    for(size_t j=0; j<a.size(); j++)
+      std::cout << a.at(j) << ",";
+    std::cout << std::endl;
+  }*/
 
   return true;
 }
@@ -876,20 +901,6 @@ bool AccelBrakeMapCalibratorGear::updateFourCellAroundOffset(
   const bool accel_mode, const int accel_pedal_index, const int accel_vel_index,
   const int brake_pedal_index, const int brake_vel_index, const double measured_acc)
 {
-  // pre-defined
-  static Map accel_map_offset_vec_(
-    accel_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
-  static Map brake_map_offset_vec_(
-    brake_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
-  static std::vector<std::vector<Eigen::MatrixXd>> accel_covariance_mat_(
-    accel_map_value_.size() - 1,
-    std::vector<Eigen::MatrixXd>(
-      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
-  static std::vector<std::vector<Eigen::MatrixXd>> brake_covariance_mat_(
-    brake_map_value_.size() - 1,
-    std::vector<Eigen::MatrixXd>(
-      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
-
   auto & update_map_value = accel_mode ? update_accel_map_value_ : update_brake_map_value_;
   auto & offset_covariance_value =
     accel_mode ? accel_offset_covariance_value_ : brake_offset_covariance_value_;
@@ -961,6 +972,7 @@ bool AccelBrakeMapCalibratorGear::updateFourCellAroundOffset(
   Eigen::RowVectorXd phiT(4);
   phiT = phi.transpose();
   double rk = phiT * covariance * phi;
+  //std::cout << "rk," << rk << std::endl;
 
   G = covariance * phi / (forgetting_factor_ + rk);
   double beta = rk > 0 ? (forgetting_factor_ - (1 - forgetting_factor_) / rk) : 1;
@@ -1011,12 +1023,20 @@ bool AccelBrakeMapCalibratorGear::updateFourCellAroundOffset(
     map_value.at(pedal_index + 0).at(vel_index + 1) + map_offset(2);
   update_map_value.at(pedal_index + 1).at(vel_index + 1) =
     map_value.at(pedal_index + 1).at(vel_index + 1) + map_offset(3);
+  //std::cout << "map_offset," << map_offset(0) << "," << map_offset(1) << "," << map_offset(2) << "," << map_offset(3) << std::endl;
 
   offset_covariance_value.at(pedal_index + 0).at(vel_index + 0) = std::sqrt(sigma(0));
   offset_covariance_value.at(pedal_index + 1).at(vel_index + 1) = std::sqrt(sigma(1));
   offset_covariance_value.at(pedal_index + 0).at(vel_index + 0) = std::sqrt(sigma(2));
   offset_covariance_value.at(pedal_index + 1).at(vel_index + 1) = std::sqrt(sigma(3));
 
+  /*for(size_t i=0; i<update_accel_map_value_.size(); i++)
+  {
+    std::vector<double> a = update_accel_map_value_.at(i);
+    for(size_t j=0; j<a.size(); j++)
+      std::cout << a.at(j) << ",";
+    std::cout << std::endl;
+  }*/
   return true;
 }
 

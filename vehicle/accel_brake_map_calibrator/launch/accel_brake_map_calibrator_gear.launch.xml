@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+  <arg name="ns_name" default="d1"/>
   <arg name="accel_brake_map_calib_param" default="$(find-pkg-share accel_brake_map_calibrator)/config/accel_brake_map_calibrator.param.yaml"/>
   <arg name="csv_default_map_dir" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/"/>
   <arg name="csv_calibrated_map_dir" default="$(find-pkg-share accel_brake_map_calibrator)/config/"/>
@@ -10,7 +11,6 @@
   <arg name="use_sim_time" default="false"/>
   <arg name="calibration_method" default="each_cell"/>
   <arg name="select_gear" default="2" description="default is GearRepotr::DRIVE"/>
-  <arg name="ns_name" default="d1"/>
 
   <group>
     <push-ros-namespace namespace="$(var ns_name)"/>
@@ -26,7 +26,7 @@
       <remap from="~/input/update_map_dir" to="~/update_map_dir"/>
       <param name="csv_default_map_dir" value="$(var csv_default_map_dir)"/>
       <param name="csv_calibrated_map_dir" value="$(var csv_calibrated_map_dir)"/>
-      <param name="output_log_file" value="$(find-pkg-share accel_brake_map_calibrator)/config/log.csv"/>
+      <param name="output_log_file" value="$(find-pkg-share accel_brake_map_calibrator)/config/log_$(var ns_name).csv"/>
       <param name="pedal_accel_graph_output" value="$(var pedal_accel_graph_output)"/>
       <param name="progress_file_output" value="$(var progress_file_output)"/>
       <param name="select_gear" value="$(var select_gear)"/>
@@ -38,6 +38,6 @@
       <param name="calibration_method" value="$(var calibration_method)"/>
     </node>
     <!-- Rviz -->
-    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share accel_brake_map_calibrator)/rviz/occupancy.rviz" if="$(var rviz)"/>
+    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share accel_brake_map_calibrator)/rviz/occupancy_multi.rviz" if="$(var rviz)"/>
   </group>
 </launch>

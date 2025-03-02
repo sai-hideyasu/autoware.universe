@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- gearタグはautoware_auto_vehicle_msgs::GearReportのDRIVE定数 -->
+  <arg name="gear1" default="2"/>
+  <arg name="gear2" default="3"/>
+  <arg name="gear3" default="4"/>
+  <arg name="gear4" default="5"/>
+  <arg name="gear5" default="6"/>
+  <arg name="gear6" default="7"/>
+
+  <arg name="cmd1" default="/control/command/d1/actuation_cmd"/>
+  <arg name="cmd2" default="/control/command/d2/actuation_cmd"/>
+  <arg name="cmd3" default="/control/command/d3/actuation_cmd"/>
+  <arg name="cmd4" default="/control/command/d4/actuation_cmd"/>
+  <arg name="cmd5" default="/control/command/d5/actuation_cmd"/>
+  <arg name="cmd6" default="/control/command/d6/actuation_cmd"/>
+
+  <arg name="gear_report" default="/vehicle/status/gear_status"/>
+  <arg name="actuation_cmd" default="/control/command/actuation_cmd"/>
+
+  <node pkg="raw_vehicle_cmd_selector" exec="raw_vehicle_cmd_selector" name="raw_vehicle_cmd_selector" output="screen">
+    <param name="gear1" value="$(var gear1)"/>
+    <param name="gear2" value="$(var gear2)"/>
+    <param name="gear3" value="$(var gear3)"/>
+    <param name="gear4" value="$(var gear4)"/>
+    <param name="gear5" value="$(var gear5)"/>
+    <param name="gear6" value="$(var gear6)"/>
+
+    <param name="cmd1" value="$(var cmd1)"/>
+    <param name="cmd2" value="$(var cmd2)"/>
+    <param name="cmd3" value="$(var cmd3)"/>
+    <param name="cmd4" value="$(var cmd4)"/>
+    <param name="cmd5" value="$(var cmd5)"/>
+    <param name="cmd6" value="$(var cmd6)"/>
+
+    <remap from="gear_report" to="$(var gear_report)"/>
+    <remap from="actuation_cmd" to="$(var actuation_cmd)"/>
+  </node>
+</launch>

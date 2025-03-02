@@ -238,6 +238,11 @@ private:
   // output log
   std::ofstream output_log_;
 
+  Map accel_map_offset_vec_;
+  Map brake_map_offset_vec_;
+  std::vector<std::vector<Eigen::MatrixXd>> accel_covariance_mat_;
+  std::vector<std::vector<Eigen::MatrixXd>> brake_covariance_mat_;
+
   bool getCurrentPitchFromTF(double * pitch);
   void timerCallback();
   void timerCallbackOutputCSV();
